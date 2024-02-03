@@ -361,11 +361,26 @@ userController.post(
 )
 
 // Update User
+const updateUserSchema = {
+    type: "object",
+    properties: {
+        ID: { type: "number" },
+        email: { type: "string" },
+        password: { type: "string", minLength: 6}, // Consider not requiring this for updates
+        role: { type: "string", enum: ["admin", "customer"] },
+        firstname: { type: "string" },
+        lastname: { type: "string" },
+        address: { type: "string" },
+        phone: { type: "string" },
+        authentication_key: { type: "string" } // Likely not needed in formData
+    },
+    required: ["ID"], // Only ID is required for identifying the record to update
+    additionalProperties: false // Prevents submission of properties not defined in the schema
+};
+
 userController.patch(
     "/users",
-    [
-        //auth(["admin", "customer"])
-    ],
+    validate({ body: updateUserSchema }),
     async (req, res) => {
         console.log('Received update request with body:', req.body);
 
@@ -379,12 +394,12 @@ userController.patch(
         console.log(formData.ID)
 
         // Check if the user has a customer role and whether they are updating their own data.
-        if (req.user.role === "customer" && req.user.ID != formData.ID) {
+/*         if (req.user.role === "customer" && req.user.ID != formData.ID) {
             return res.status(403).json({
                 status: 403,
                 message: "You are not authorized to update other user's data"
             })
-        }
+        } */
 
         // Convert user data into a User model object
         const user = User(

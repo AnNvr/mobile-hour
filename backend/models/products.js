@@ -1,4 +1,4 @@
-import { db } from "../database";
+import { db } from "../database.js";
 
 // Model for products
 export function Product(
@@ -64,7 +64,7 @@ export async function create(product) {
     // create product object and return result
     return db.query(
         "INSERT INTO products (model, brand, price, stock_on_hand) VALUES (?, ?, ?, ?)",
-        [product.ID, product.model, product.brand, product.price, product.stock_on_hand]
+        [product.model, product.brand, product.price, product.stock_on_hand]
     )
     .then(([result]) => {
         // generate ID for the created object

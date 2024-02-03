@@ -16,6 +16,8 @@ app.use(express.json())
 // TODO: import and use the routers of each controller
 import userController from "./controllers/users.js";
 app.use(userController)
+import productController from "./controllers/products.js";
+app.use(productController)
 
 import { validateErrorMiddleware } from "./middleware/validator.js";
 app.use(validateErrorMiddleware)
