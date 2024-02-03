@@ -367,8 +367,16 @@ userController.patch(
         //auth(["admin", "customer"])
     ],
     async (req, res) => {
+        console.log('Received update request with body:', req.body);
+
         // Get the user data out of the request
         const formData = req.body.formData
+
+        console.log("Updating User:", formData);
+        console.log("Received FormData for Update:", req.body.formData)
+        console.log(req.user.role)
+        console.log(req.user.ID)
+        console.log(formData.ID)
 
         // Check if the user has a customer role and whether they are updating their own data.
         if (req.user.role === "customer" && req.user.ID != formData.ID) {

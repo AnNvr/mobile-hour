@@ -148,7 +148,7 @@ export async function update(user) {
         "UPDATE users SET "
         + "email = ?, "
         + "password = ?, "
-        + "role = ?,"
+        + "role = ?, "
         + "firstname = ?, "
         + "lastname = ?, "
         + "address = ?, " 
