@@ -384,14 +384,29 @@ userController.patch(
     async (req, res) => {
         console.log('Received update request with body:', req.body);
 
-        // Get the user data out of the request
-        const formData = req.body.formData
+    // Directly destructuring properties from req.body
+    const {
+        ID,
+        email,
+        password,
+        role,
+        firstname,
+        lastname,
+        address,
+        phone,
+        authentication_key,
+    } = req.body;
 
-        console.log("Updating User:", formData);
-        console.log("Received FormData for Update:", req.body.formData)
-        console.log(req.user.role)
-        console.log(req.user.ID)
-        console.log(formData.ID)
+     // Log for debugging
+    console.log('Extracted from req.body:', ID, email, role, authentication_key);
+    
+    // Check if ID is present
+    if (!ID) {
+        return res.status(400).json({
+            status: 400,
+            message: "Missing ID in request body",
+        });
+    }
 
         // Check if the user has a customer role and whether they are updating their own data.
 /*         if (req.user.role === "customer" && req.user.ID != formData.ID) {
@@ -403,41 +418,40 @@ userController.patch(
 
         // Convert user data into a User model object
         const user = User(
-            formData.ID,
-            formData.email,
-            formData.password,
-            formData.role,
-            formData.firstname,
-            formData.lastname,
-            formData.address,
-            formData.phone,
-            formData.authentication_key
+            ID,
+            email,
+            password,
+            role,
+            firstname,
+            lastname,
+            address,
+            phone,
+            authentication_key
         )
 
         // use the updated model fn to update this user in the Database
-        update(user)
-            .then(updatedUser => {
-                if (updatedUser) {
-                    res.status(200).json({
-                        status: 200,
-                        message: "User updated succesfully!",
-                        user: updatedUser
-                    })
-                } else {
-                    res.status(404).json({
-                        status: 404,
-                        message: "User not found"
-                    })
-                }
-            })
-            .catch(error => {
-                res.status(500).json({
-                    status: 500,
-                    message: "Failed to update user" + error
-                })
-            })
+        try {
+            const updatedUser = await update(user);
+            if (updatedUser) {
+                res.status(200).json({
+                    status: 200,
+                    message: "User updated successfully!",
+                    user: updatedUser,
+                });
+            } else {
+                res.status(404).json({
+                    status: 404,
+                    message: "User not found",
+                });
+            }
+        } catch (error) {
+            console.error('Update user error:', error);
+            res.status(500).json({
+                status: 500,
+                message: `Failed to update user: ${error.message}`,
+            });
         }
-)
+    })
 
 // Delete User
 const deleteUserSchema = {

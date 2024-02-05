@@ -10,6 +10,8 @@ import Dashboard from "./pages/admin/Dashboard";
 import Users from "./pages/admin/Users";
 import AdminProducts from "./pages/admin/AdminProducts";
 import Orders from "./pages/admin/Orders";
+import Products from "./pages/products/Products";
+import ProductDetails from "./pages/products/ProductDetails";
 import { AuthenticationProvider } from "./hooks/authentication";
 
 function App() {
@@ -22,6 +24,8 @@ function App() {
             <Route path="/" element={<Layout />}>
               <Route index element={<Landing />} />
               <Route path="about" element={<About />} />
+              <Route path="products" element={<Products />} />
+              <Route path="products/:id" element={<ProductDetails />} />
               <Route path="login" element={<Login />} />
               <Route path="signup" element={<Register />} />
 
