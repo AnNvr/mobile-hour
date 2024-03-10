@@ -1,15 +1,10 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { useAuthentication } from "../hooks/authentication";
-import { registerUser } from "../api/user";
+import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { auth } from "../api.js";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 export default function Register() {
-    const navigate = useNavigate()
-
-    const [user, login, logout] = useAuthentication()
-
-    const [statusMessage, setStatusMessage] = useState("")
-
     const [formData, setFormData] = useState({
         firstname: "",
         lastname: "",
@@ -17,70 +12,106 @@ export default function Register() {
         role: "customer",
         password: "",
         address: "",
-        phone: ""
-    })
+        phone: "",
+    });
+    const [emailAlert, setEmailAlert] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [registrationSuccess, setRegistrationSuccess] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    function onRegisterSubmit(e) {
-        e.preventDefault()
-        setStatusMessage("Registering...")
+    const navigate = useNavigate();
+    const emailInputRef = useRef(null);
+    const passwordInputRef = useRef(null);
+    const firstnameInputRef = useRef(null);
+    const lastnameInputRef = useRef(null);
+    const addressInputRef = useRef(null);
+    const phoneInputRef = useRef(null);
+    const buttonRef = useRef(null);
+    const modalRef = useRef(null);
 
-        if (!/[A-Za-z]{1,32}/.test(formData.firstname)) {
-            setStatusMessage("invalid firstname");
-            return;
+    useEffect(() => {
+        // focus on email when the app mounts
+        emailInputRef.current.focus();
+    }, []);
+
+    useEffect(() => {
+        if (showModal) {
+            modalRef.current.focus();
         }
+    }, [showModal]);
 
-        if (!/[A-Za-z]{1,32}/.test(formData.lastname)) {
-            setStatusMessage("invalid firstname");
-            return;
-        }
-
-        if (!/^[a-zA-Z0-9]+@[a-zA-Z0-9]+.[a-zA-Z0-9]+$/.test(formData.email)) {
-            setStatusMessage("Invalid email address")
-            return
-        }
-
-        if (!/[a-zA-Z0-9]{6,24}/.test(formData.password)) {
-            setStatusMessage("Invalid password");
-            return;
-        }
-
-        if (!/[0-9.\s\a-z]{1,30}/.test(formData.address)) {
-            setStatusMessage("Invalid address");
-            return;
-        }
-
-        if (
-            !/^((?:[1-9][0-9 ().-]{5,28}[0-9])|(?:(00|0)( ){0,1}[1-9][0-9 ().-]{3,26}[0-9])|(?:(\+)( ){0,1}[1-9][0-9 ().-]{4,27}[0-9]))$/.test(
-                formData.phone
-            )
-        ) {
-            setStatusMessage("invalid phone number");
-            return;
-        }
-
-        // register, then attempt to login
-        registerUser(formData)
-            .then(result => {
-                setStatusMessage(result.message)
-                login(formData.email, formData.password)
-                    .then(result => {
-                        setStatusMessage(result.message)
-                        navigate('/dashboard')
-                    })
-                    .catch(error => {
-                        console.log("Registration error: ", error)
-                        setStatusMessage("Registration failed: " + error.message)
-                    })
-            })
+    function togglePasswordVisibility(e) {
+        e.preventDefault();
+        setShowPassword((prevState) => !prevState);
     }
+
+    function handleShowModal() {
+        setShowModal(true);
+    }
+
+    function handleHideModal() {
+        setShowModal(false);
+    }
+
+    function handleChange(e) {
+        const { name, value } = e.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    }
+
+    async function handleSubmit(e) {
+        e.preventDefault();
+
+        try {
+            const userCredential = await createUserWithEmailAndPassword(
+                auth,
+                formData.email,
+                formData.password
+            );
+            console.log("User registered:", userCredential.user);
+            setEmailAlert(false);
+            setRegistrationSuccess(true);
+            handleShowModal(true);
+            navigate("/admin");
+        } catch (error) {
+            console.error("Error creating user: ", error);
+            setEmailAlert(true);
+        }
+    }
+
     return (
         <section className="flex flex-col items-center pt-6">
+            {showModal && (
+                <div
+                    className="modal"
+                    ref={modalRef}
+                    tabIndex="-1"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="modalTitle"
+                    aria-describedby="modalDesc"
+                >
+                    <div className="modal-content">
+                        <h2 id="modalTitle">Registration Successful</h2>
+                        <p id="modalDesc">You have successfully registered.</p>
+                        <button onClick={handleHideModal} ref={buttonRef}>
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
             <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
                 <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
                     <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
                         Create an account
                     </h1>
-                    <form className="space-y-4 md:space-y-6" onSubmit={onRegisterSubmit}>
+                    <form
+                        onSubmit={handleSubmit}
+                        className="space-y-4 md:space-y-6"
+                    >
                         <div>
                             <label
                                 for="firstname"
@@ -89,13 +120,14 @@ export default function Register() {
                                 First name
                             </label>
                             <input
+                                ref={firstnameInputRef}
                                 type="text"
                                 name="firstname"
                                 className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 placeholder="Emelia Erickson"
                                 required
                                 value={formData.firstname}
-                                onChange={(e) => setFormData(prevState => { return { ...prevState, firstname: e.target.value }})}
+                                onChange={handleChange}
                             />
                         </div>
                         <div>
@@ -106,13 +138,14 @@ export default function Register() {
                                 Lastname
                             </label>
                             <input
+                                ref={lastnameInputRef}
                                 type="text"
                                 name="lastname"
                                 className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 placeholder="emelia_erickson24"
                                 required
                                 value={formData.lastname}
-                                onChange={(e) => setFormData(prevState => { return { ...prevState, lastname: e.target.value }})}
+                                onChange={handleChange}
                             />
                         </div>
                         <div>
@@ -123,13 +156,14 @@ export default function Register() {
                                 Email
                             </label>
                             <input
+                                ref={emailInputRef}
                                 type="email"
                                 name="email"
                                 className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 placeholder="email@server.com"
                                 required
                                 value={formData.email}
-                                onChange={(e) => setFormData(prevState => { return { ...prevState, email: e.target.value }})}
+                                onChange={handleChange}
                             />
                         </div>
                         <div>
@@ -139,15 +173,26 @@ export default function Register() {
                             >
                                 Password
                             </label>
-                            <input
-                                type="password"
-                                name="password"
-                                placeholder="••••••••"
-                                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                required
-                                value={formData.password}
-                                onChange={(e) => setFormData(prevState => { return { ...prevState, password: e.target.value }})}
-                            />
+                            <div className="relative">
+                                <input
+                                    ref={passwordInputRef}
+                                    type={showPassword ? "text" : "password"}
+                                    name="password"
+                                    placeholder="••••••••"
+                                    minLength="6"
+                                    className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                    required
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={togglePasswordVisibility}
+                                    className="absolute inset-y-0 right-0 mr-2 flex items-center text-lg"
+                                >
+                                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                </button>
+                            </div>
                         </div>
                         <div>
                             <label
@@ -157,13 +202,14 @@ export default function Register() {
                                 Address
                             </label>
                             <input
+                                ref={addressInputRef}
                                 type="address"
                                 name="address"
                                 placeholder="1 Name Street"
                                 className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 required
                                 value={formData.address}
-                                onChange={(e) => setFormData(prevState => { return { ...prevState, address: e.target.value }})}
+                                onChange={handleChange}
                             />
                         </div>
                         <div>
@@ -174,20 +220,33 @@ export default function Register() {
                                 phone
                             </label>
                             <input
+                                ref={phoneInputRef}
                                 type="text"
                                 name="phone"
                                 placeholder="0123456789"
                                 className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 required
                                 value={formData.phone}
-                                onChange={(e) => setFormData(prevState => { return { ...prevState, phone: e.target.value }})}
+                                onChange={handleChange}
                             />
                         </div>
+
+                        {emailAlert && (
+                            <p className="text-red-500 text-sm">
+                                This email already exists. Try another one.
+                            </p>
+                        )}
+
                         <button
                             type="submit"
-                            className="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                            className={`w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 ${
+                                isSubmitting === true ? "loading" : ""
+                            }`}
+                            disabled={isSubmitting === true}
                         >
-                            Create an account
+                            {isSubmitting === true
+                                ? "Registering..."
+                                : "Register"}
                         </button>
                         <p className="text-sm font-light text-gray-500 dark:text-gray-400">
                             Already have an account?{" "}
@@ -198,9 +257,18 @@ export default function Register() {
                                 Sign in here
                             </Link>
                         </p>
-                        <label className="label">
-                            <span className="label-text-alt">{statusMessage}</span>
-                        </label>
+                        {registrationSuccess && (
+                            <div role="alert" className="alert alert-success">
+                                <div className="flex-1">
+                                    <label>
+                                        <span className="label-text text-white">
+                                            Registration successful! Redirecting
+                                            to dashboard...
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        )}
                     </form>
                 </div>
             </div>

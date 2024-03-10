@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { getAllProducts } from "../../api/products";
 
 const style = {
     backgroundImage:
@@ -17,21 +16,6 @@ export default function Products() {
     // define params for filtering products by brand
     const [searchParams, setSearchParams] = useSearchParams();
     const brandFilter = searchParams.get("brand");
-
-    useEffect(() => {
-        async function loadProducts() {
-            setLoading(true);
-            try {
-                const data = await getAllProducts();
-                setProducts(data);
-            } catch (error) {
-                setError(error);
-            } finally {
-                setLoading(false);
-            }
-        }
-        loadProducts();
-    }, []);
 
     // error handling here:
     if (error) {
