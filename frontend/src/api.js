@@ -130,4 +130,52 @@ export async function getProductByID(productID) {
     }
 }
 
-// TODO: create product, update product, delete product
+
+export async function createProduct(product) {
+    try {
+        // reference to the collection
+        const productsCollection = collection(db, "product")
+        
+        // add the new document to the collection
+        const docRef = await addDoc(productsCollection, product)
+
+        // return the new doc by its ID
+        return docRef.id
+    } catch (error) {
+        console.log("Error adding document:", error)
+        throw error
+    }
+}
+
+export async function updateProduct(productID, updateData) {
+    try {
+        // reference to a doc by ID
+        const docRef = doc(db, "products", productID)
+
+        // update it
+        await updateDoc(docRef, updateData)
+
+        console.log(`Doc with ID ${productID} updated!`)
+        return true
+
+    } catch (error) {
+        console.log("Error updating document:", error)
+        return false
+    }
+}
+
+export async function deleteProduct(productID) {
+    try {
+        // reference to a doc by ID
+        const docRef = doc(db, "products", productID)
+
+        // delete it
+        await deleteDoc(docRef)
+
+        console.log(`Doc with ID ${productID} deleted!`)
+        return true
+    } catch (error) {
+        console.log("Error deleting doc: ", error)
+        return false
+    }
+}

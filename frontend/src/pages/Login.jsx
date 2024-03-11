@@ -10,7 +10,7 @@ const styles = {
 
 export default function Login() {
     const [formData, setFormData] = useState({ email: "", password: "" });
-    const [status, setStatus] = useState("");
+    const [status, setStatus] = useState("idle");
     const [error, setError] = useState(null);
 
     const location = useLocation();
@@ -32,7 +32,7 @@ export default function Login() {
             setError(error);
             console.log("Error loggin in: ", error.message);
         } finally {
-            setStatus("");
+            setStatus("idle");
         }
     }
 
@@ -47,8 +47,11 @@ export default function Login() {
     return (
 <div className="hero min-h-screen bg-opacity-50 bg-cover" style={{backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.8) 100%), url('https://images.pexels.com/photos/936012/pexels-photo-936012.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1')`}}>
     <div className="hero-content flex justify-center items-center">
+        {error && <p className="text-center text-red-600">{error.message}</p>}
+
         <form onSubmit={handleSubmit} className="card flex-shrink-0 w-full max-w-md shadow-2xl bg-white bg-opacity-90">
             <div className="card-body">
+            {location.state?.message && <p className="text-center text-lg text-green-600">{location.state.message}</p>}
                 <h1 className="text-5xl font-bold text-center mb-6">Login now!</h1>
                 <p className="text-center mb-6">
                     Welcome back! Please enter your details to sign in and
@@ -60,6 +63,7 @@ export default function Login() {
                     </label>
                     <input
                         type="email"
+                        name="email"
                         placeholder="email"
                         className="input input-bordered w-full"
                         value={formData.email}
@@ -72,6 +76,7 @@ export default function Login() {
                     </label>
                     <input
                         type="password"
+                        name="password"
                         placeholder="password"
                         className="input input-bordered w-full"
                         value={formData.password}
@@ -90,8 +95,9 @@ export default function Login() {
                     <button
                         type="submit"
                         className="btn btn-primary w-full"
+                        disabled={status === "submitting"}
                     >
-                        Login
+                        {status === "submitting" ? "Logging in..." : "Log in"}
                     </button>
                     <p className="mt-4 text-center">
                         <a
@@ -100,6 +106,7 @@ export default function Login() {
                             onClick={() => {
                                 navigate("/register");
                             }}
+                            disabled={status === "submitting"}
                         >
                             Register now!
                         </a>

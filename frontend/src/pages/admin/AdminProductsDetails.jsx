@@ -1,5 +1,5 @@
+
+
 export default function AdminProductDetails() {
-    return (
-        <h1>This is admin product details page</h1>
-    )
+    return <h2>Product details here</h2>
 }
